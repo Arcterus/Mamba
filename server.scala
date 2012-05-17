@@ -14,9 +14,7 @@ object Server {
             server.configureBlocking(false)
             server.socket().bind(InetSocketAddress(457))
             SocketChannel socket = server.accept()
-            if(socket == Null) {
-                // No request
-            } else {
+            if(socket != Null) {
                 // Request
                 (new Request).start
             }
@@ -29,6 +27,8 @@ object Server {
         val data = this.readAll(FileInputStream("/etc/mamba.conf").getChannel())
         var currentWord: String = ""
         var ignore: Boolean = false
+        var inQuote: Boolean = false
+        var prevChar: Character = '\0'
         var operation: Integer = 0
         data.foreach(ch: Character =>
             ch match {
@@ -37,11 +37,15 @@ object Server {
                         currentWord += toString(ch)
                     }
                 case '#' =>
-                    if(ignore == false) {
+                    if(inQuote == true) {
+                        currentWord += "#"
+                    } else if(ignore == false) {
                         ignore = true
                     }
                 case ' ' | '\t' =>
-                    if(operation != 0) {
+                    if(inQuote == true) {
+                        currentWord += toString(ch)
+                    } else if(operation != 0) {
                         operation match {
                             case 1 =>
                                 fileDir = currentWord
@@ -57,9 +61,20 @@ object Server {
                     } else if(operation != 0) {
                         opeartion = 0
                     }
+                case '"' =>
+                    if(ignore == false) {
+                        if(prevChar == '\\') {
+                            
+                        }
+                        inQuote = !inQuote
+                    }
+                case '\\' =>
+                    // ignore, but allow
                 default =>
                     // Do nothing for now
             }
+            prevChar = ch
+        )
     }
     
     private def readAll(file: FileChannel): String {
