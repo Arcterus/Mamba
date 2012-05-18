@@ -13,8 +13,8 @@ object Server {
             this.loadConf()
             val server = ServerSocketChannel.open()
             server.configureBlocking(false)
-            server.socket().bind(InetSocketAddress(457))
-            SocketChannel socket = server.accept()
+            server.socket().bind(new InetSocketAddress(457))
+            var socket: SocketChannel = server.accept()
             if(socket != Null) {
                 // Request
                 (new Request).start()
