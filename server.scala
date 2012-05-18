@@ -19,8 +19,9 @@ object Server {
                 // Request
                 (new Request).start
             }
-        } catch(IOException ex) {
-            ex.printStackTrace()
+        } catch {
+            case ex: IOException =>
+                ex.printStackTrace()
         }
     }
     
@@ -109,7 +110,7 @@ class Request extends Actor {
         for(subDir <- rootDir) {
             files.append(subDir.getFileName())
             try {
-                var stream: DirectoryStream<Path> = Files.newDirectoryStream(subDir)
+                var stream/*: DirectoryStream<Path>*/ = Files.newDirectoryStream(subDir)
                 for(file <- stream) {
                     files.append(file.getFileName())
                 }
