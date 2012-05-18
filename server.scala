@@ -36,9 +36,9 @@ object Server {
         var inQuote: Boolean = false
         var prevChar: Char = '\0'
         var operation: Symbol = 'none
-        def alphaFunc(ch: Character): Void = {
+        def alphaFunc(ch: Char): Void = {
             if(ignore == false) {
-                currentWord += toString(ch)
+                currentWord += ch.toString()
             }
         }
         for(ch: Char <- data) {
@@ -57,7 +57,7 @@ object Server {
                     }
                 case ' ' | '\t' =>
                     if(inQuote == true) {
-                        currentWord += toString(ch)
+                        currentWord += ch.toString()
                     } else if(operation != 'none) {
                         operation match {
                             case 'fileDir =>
@@ -107,7 +107,7 @@ class Request extends Actor {
     }
     
     private def listDir(path: Path): Array[String] = {
-        val files: ArrayBuffer = new ArrayBuffer(20)
+        val files = new ArrayBuffer(20)
         var rootDir: Iterable[Path] = path.asScala
         for(subDir <- rootDir) {
             files.append(subDir.getFileName())
