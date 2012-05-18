@@ -1,13 +1,14 @@
-package mamba;
+package mamba
 
 import java.nio.channels._
+import java.nio.file._
 import java.net._
 import scala.actors.Actor._
 
 object Server {
     var fileDir: String = ""
     
-    def main(args: String[]) {
+    def main(args: String[]) =>
         try {
             this.loadConf()
             val server = ServerSocketChannel.open()
@@ -21,16 +22,15 @@ object Server {
         } catch(IOException ex) {
             ex.printStackTrace()
         }
-    }
     
-    def loadConf(): Void {
+    def loadConf(): Void =>
         val data = this.readAll(FileInputStream("/etc/mamba.conf").getChannel())
         var currentWord: String = ""
         var ignore: Boolean = false
         var inQuote: Boolean = false
         var prevChar: Character = '\0'
         var operation: Integer = 0
-        data.foreach(ch: Character =>
+        for(ch <- data) {
             ch match {
                 case 'a'..'z' | 'A'..'Z' | '0'..'9' | '_' =>
                     if(ignore == false) {
@@ -64,9 +64,10 @@ object Server {
                 case '"' =>
                     if(ignore == false) {
                         if(prevChar == '\\') {
-                            
+                            currentWord += "\""
+                        } else {
+                            inQuote = !inQuote
                         }
-                        inQuote = !inQuote
                     }
                 case '\\' =>
                     // ignore, but allow
@@ -74,10 +75,9 @@ object Server {
                     // Do nothing for now
             }
             prevChar = ch
-        )
-    }
+        }
     
-    private def readAll(file: FileChannel): String {
+    private def readAll(file: FileChannel): String =>
         var result: String = ""
         var buffer: ByteBuffer = ByteBuffer.allocate(1024)
         while(buffer.read(file) != -1) {
@@ -85,11 +85,24 @@ object Server {
             buffer.clear()
         }
         return result
-    }
 }
 
 class Request extends Actor {
-    def handle(): Boolean {
-        return true;
+    def handle(): Boolean =>
+        
+        return true
+    
+    private def listDir(Path path): Array[String] =>
+        var files: Array[String] = Null
+        Iterable<Path> rootDir = path
+        for(subDir <- rootDir) {
+            files.append(subDir.getFileName())
+            try {
+                var stream: DirectoryStream<Path> = Files.newDirectoryStream(subDir)
+                for(file <- stream) {
+                    files.append(file.getFileName())
+                }
+            }
+        }
     }
 }
