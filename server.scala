@@ -31,13 +31,19 @@ object Server {
         var inQuote: Boolean = false
         var prevChar: Character = '\0'
         var operation: Integer = 0
+        def alphaFunc(ch: Character): Void = {
+            if(ignore == false) {
+                currentWord += toString(ch)
+            }
+        }
         for(ch <- data) {
             ch match {
-                case ch if 'a' until 'z' contains ch | ch if 'A' until 'Z' contains ch
-                    | ch if '0' until '9' contains ch | '_' =>
-                    if(ignore == false) {
-                        currentWord += toString(ch)
-                    }
+                case ch if 'a' until 'z' contains ch =>
+                    alphaFunc(ch)
+                case ch if 'A' until 'Z' contains ch =>
+                    alphaFunc(ch)
+                case ch if '0' until '9' contains ch | '_' =>
+                    alphaFunc(ch)
                 case '#' =>
                     if(inQuote == true) {
                         currentWord += "#"
