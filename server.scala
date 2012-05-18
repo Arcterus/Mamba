@@ -3,7 +3,7 @@ package mamba
 import java.nio.channels._
 import java.nio.file._
 import java.net._
-import scala.actors.Actor._
+import scala.actors._
 
 object Server {
     var fileDir: String = ""
@@ -17,7 +17,7 @@ object Server {
             SocketChannel socket = server.accept()
             if(socket != Null) {
                 // Request
-                (new Request).start
+                (new Request).start()
             }
         } catch {
             case ex: IOException =>
@@ -98,10 +98,8 @@ object Server {
     }
 }
 
-class Request extends Actor {
-    def handle(): Boolean = {
-        
-        return true
+object Request extends Actor {
+    def act() = {
     }
     
     private def listDir(path: Path): Array[String] = {
