@@ -33,7 +33,8 @@ object Server {
         var operation: Integer = 0
         for(ch <- data) {
             ch match {
-                case 'a'..'z' | 'A'..'Z' | '0'..'9' | '_' =>
+                case if 'a' until 'z' contains ch | if 'A' until 'Z' contains ch
+                    | if '0' until '9' contains ch | '_' =>
                     if(ignore == false) {
                         currentWord += toString(ch)
                     }
