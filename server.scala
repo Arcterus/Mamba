@@ -98,7 +98,7 @@ object Server {
     }
 }
 
-object Request extends Actor {
+class Request extends Actor {
     def act() = {
     }
     
