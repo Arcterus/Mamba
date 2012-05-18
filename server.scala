@@ -38,7 +38,7 @@ object Server {
                 currentWord += toString(ch)
             }
         }
-        data.foreach(ch =>
+        data.foreach(ch: Character => {
             ch match {
                 case ch if 'a' until 'z' contains ch =>
                     alphaFunc(ch)
@@ -85,7 +85,7 @@ object Server {
                     // Do nothing for now
             }
             prevChar = ch
-        )
+        })
     }
     
     private def readAll(file: FileChannel): String = {
