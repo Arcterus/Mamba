@@ -107,11 +107,11 @@ class Request extends Actor {
     
     private def listDir(path: Path): Array[String] = {
         val files: ArrayBuffer = new ArrayBuffer(20)
-        var rootDir: Iterable<Path> = path
+        var rootDir: Iterable[Path] = path
         for(subDir <- rootDir) {
             files.append(subDir.getFileName())
             try {
-                var stream/*: DirectoryStream<Path>*/ = Files.newDirectoryStream(subDir)
+                var stream: DirectoryStream[Path] = Files.newDirectoryStream(subDir)
                 for(file <- stream) {
                     files.append(file.getFileName())
                 }
