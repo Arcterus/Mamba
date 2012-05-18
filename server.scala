@@ -7,6 +7,7 @@ import java.io._
 import java.net._
 import scala.actors._
 import scala.collection.mutable.ArrayBuffer
+import scala.collection.JavaConverters._
 
 object Server {
     var fileDir: String = ""
@@ -107,7 +108,7 @@ class Request extends Actor {
     
     private def listDir(path: Path): Array[String] = {
         val files: ArrayBuffer = new ArrayBuffer(20)
-        var rootDir: Iterable[Path] = path
+        var rootDir: Iterable[Path] = path.asScala
         for(subDir <- rootDir) {
             files.append(subDir.getFileName())
             try {
