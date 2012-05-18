@@ -2,9 +2,11 @@ package mamba
 
 import java.nio.channels._
 import java.nio.file._
+import java.nio.ByteBuffer
 import java.io._
 import java.net._
 import scala.actors._
+import scala.collection.mutable.ArrayBuffer
 
 object Server {
     var fileDir: String = ""
@@ -31,14 +33,14 @@ object Server {
         var currentWord: String = ""
         var ignore: Boolean = false
         var inQuote: Boolean = false
-        var prevChar: Character = '\0'
+        var prevChar: Char = '\0'
         var operation: Symbol = 'none
         def alphaFunc(ch: Character): Void = {
             if(ignore == false) {
                 currentWord += toString(ch)
             }
         }
-        for(ch: Character <- data) {
+        for(ch: Char <- data) {
             ch match {
                 case ch if 'a' until 'z' contains ch =>
                     alphaFunc(ch)
@@ -104,8 +106,8 @@ class Request extends Actor {
     }
     
     private def listDir(path: Path): Array[String] = {
-        var files: Array[String] = Null
-        Iterable<Path> rootDir = path
+        val files: ArrayBuffer = new ArrayBuffer(20)
+        var rootDir: Iterable<Path> = path
         for(subDir <- rootDir) {
             files.append(subDir.getFileName())
             try {
@@ -115,5 +117,6 @@ class Request extends Actor {
                 }
             }
         }
+        return files.toArray()
     }
 }
