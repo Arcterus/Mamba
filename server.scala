@@ -32,13 +32,13 @@ object Server {
         var ignore: Boolean = false
         var inQuote: Boolean = false
         var prevChar: Character = '\0'
-        var operation: int = 0
+        var operation: Symbol = 'none
         def alphaFunc(ch: Character): Void = {
             if(ignore == false) {
                 currentWord += toString(ch)
             }
         }
-        data.foreach(ch: Character => {
+        for(ch: Character <- data) {
             ch match {
                 case ch if 'a' until 'z' contains ch =>
                     alphaFunc(ch)
@@ -55,21 +55,21 @@ object Server {
                 case ' ' | '\t' =>
                     if(inQuote == true) {
                         currentWord += toString(ch)
-                    } else if(operation != 0) {
+                    } else if(operation != 'none) {
                         operation match {
-                            case 1 =>
+                            case 'fileDir =>
                                 fileDir = currentWord
-                            case 2 =>
+                            case 'serverType =>
                                 // For ze future
                         }
                     } else if(currentWord == "fileDir") {
-                        operation = 1
+                        operation = 'fileDir
                     }
                 case '\n' =>
                     if(ignore == true) {
                         ignore = false
-                    } else if(operation != 0) {
-                        operation = 0
+                    } else if(operation != 'none) {
+                        operation = 'none
                     }
                 case '"' =>
                     if(ignore == false) {
@@ -85,7 +85,7 @@ object Server {
                     // Do nothing for now
             }
             prevChar = ch
-        })
+        }
     }
     
     private def readAll(file: FileChannel): String = {
