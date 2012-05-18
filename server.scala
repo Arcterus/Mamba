@@ -8,7 +8,7 @@ import scala.actors.Actor._
 object Server {
     var fileDir: String = ""
     
-    def main(args: Array[String]) {
+    def main(args: Array[String]) = {
         try {
             this.loadConf()
             val server = ServerSocketChannel.open()
@@ -24,7 +24,7 @@ object Server {
         }
     }
     
-    def loadConf(): Void {
+    def loadConf(): Void = {
         val data = this.readAll(FileInputStream("/etc/mamba.conf").getChannel())
         var currentWord: String = ""
         var ignore: Boolean = false
@@ -79,7 +79,7 @@ object Server {
         }
     }
     
-    private def readAll(file: FileChannel): String {
+    private def readAll(file: FileChannel): String = {
         var result: String = ""
         var buffer: ByteBuffer = ByteBuffer.allocate(1024)
         while(buffer.read(file) != -1) {
@@ -91,12 +91,12 @@ object Server {
 }
 
 class Request extends Actor {
-    def handle(): Boolean {
+    def handle(): Boolean = {
         
         return true
     }
     
-    private def listDir(path: Path): Array[String] {
+    private def listDir(path: Path): Array[String] = {
         var files: Array[String] = Null
         Iterable<Path> rootDir = path
         for(subDir <- rootDir) {
