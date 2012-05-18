@@ -8,7 +8,7 @@ import scala.actors.Actor._
 object Server {
     var fileDir: String = ""
     
-    def main(args: String[]) =>
+    def main(args: Array[String]) =>
         try {
             this.loadConf()
             val server = ServerSocketChannel.open()
@@ -92,7 +92,7 @@ class Request extends Actor {
         
         return true
     
-    private def listDir(Path path): Array[String] =>
+    private def listDir(path: Path): Array[String] =>
         var files: Array[String] = Null
         Iterable<Path> rootDir = path
         for(subDir <- rootDir) {
