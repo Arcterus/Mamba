@@ -15,7 +15,7 @@ object Server {
             server.configureBlocking(false)
             server.socket().bind(new InetSocketAddress(457))
             var socket: SocketChannel = server.accept()
-            if(socket != Null) {
+            if(socket != null) {
                 // Request
                 (new Request).start()
             }
@@ -26,7 +26,7 @@ object Server {
     }
     
     def loadConf(): Void = {
-        val data = this.readAll(FileInputStream("/etc/mamba.conf").getChannel())
+        val data = this.readAll(new FileInputStream("/etc/mamba.conf").getChannel())
         var currentWord: String = ""
         var ignore: Boolean = false
         var inQuote: Boolean = false
