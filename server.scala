@@ -143,7 +143,8 @@ class Request extends Actor {
                     }
                     act()
                 } catch {
-                    case IOException =>
+                    case ex: IOException =>
+                        ex.printStackTrace()
                         var buffer: ByteBuffer = ByteBuffer.allocate(2048)
                         for((ch: Char) <- "alert: Error opening file") {
                             buffer.putChar(ch)
@@ -153,9 +154,9 @@ class Request extends Actor {
         }
     }
     
-    private def listDir(path: Path): Array[String] = {
+    private def listDir(path: String): Array[String] = {
         val files = new ArrayBuffer[String](20)
-        var rootDir: Iterable[Path] = path.asScala
+        var rootDir: Iterable[Path] = Paths.get(path).asScala
         for(subDir <- rootDir) {
             files += subDir.toAbsolutePath().toString
             try {
@@ -177,7 +178,8 @@ class Request extends Actor {
                 return false
             }
         } catch {
-            case IOException =>
+            case ex: IOException =>
+                ex.printStackTrace()
                 return false
         }
     }
