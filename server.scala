@@ -137,7 +137,7 @@ class Request extends Actor {
                         var file: FileChannel = (new FileInputStream(filename)).getChannel()
                         socket.write(ByteBuffer.wrap("file: \n".getBytes("UTF-8")))
                         while(file.read(buffer) != -1) {
-                            socket.write(((buffer.flip()).asInstanceOf[ByteBuffer]).toString())
+                            socket.write(((buffer.flip()).asInstanceOf[ByteBuffer]))
                             buffer.clear()
                         }
                     }
