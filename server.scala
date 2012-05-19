@@ -129,13 +129,13 @@ class Request extends Actor {
                     val filename = ((buffer.flip()).asInstanceOf[ByteBuffer]).asCharBuffer().get(0)
                     if(isDirectory(directory + filename) == true) {
                         val newfilelist = listDir(directory + filename)
-                        socket.write("directory: \n")
+                        socket.write(ByteBuffer.wrap("directory: \n".getBytes("UTF-8")))
                         for(newfiles <- newfilelist) {
                             socket.write(ByteBuffer.wrap(filename.getBytes("UTF-8")))
                         }
                     } else {
                         var file: FileChannel = new FileInputStream(filename).getChannel()
-                        socket.write("file: \n")
+                        socket.write(ByteBuffer.wrap("file: \n".getBytes("UTF-8")))
                         while(file.read(buffer) != -1) {
                             socket.write(((buffer.flip()).asInstanceOf[ByteBuffer]).asCharBuffer().get(0))
                             buffer.clear()
