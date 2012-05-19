@@ -36,19 +36,19 @@ object Server {
         var inQuote: Boolean = false
         var prevChar: Char = '\0'
         var operation: Symbol = 'none
-        def alphaFunc(ch: Char): Void = {
+        def alphaFunc(ch: Char, ignore: Boolean, currentWord: String): Void = {
             if(ignore == false) {
                 currentWord += ch.toString()
             }
         }
-        for(ch: Char <- data) {
+        for((ch: Char) <- data) {
             ch match {
                 case ch if 'a' until 'z' contains ch =>
-                    alphaFunc(ch)
+                    alphaFunc(ch, ignore, currentWord)
                 case ch if 'A' until 'Z' contains ch =>
-                    alphaFunc(ch)
+                    alphaFunc(ch, ignore, currentWord)
                 case ch if '0' until '9' contains ch | '_' =>
-                    alphaFunc(ch)
+                    alphaFunc(ch, ignore, currentWord)
                 case '#' =>
                     if(inQuote == true) {
                         currentWord += "#"
@@ -84,7 +84,7 @@ object Server {
                     }
                 case '\\' =>
                     // ignore, but allow
-                default =>
+                _ =>
                     // Do nothing for now
             }
             prevChar = ch
@@ -110,7 +110,7 @@ class Request extends Actor {
         val files = new ArrayBuffer(20)
         var rootDir: Iterable[Path] = path.asScala
         for(subDir <- rootDir) {
-            files.append(subDir.getFileName())
+            files.append(subDir.toAbsolutePath().toString())
             try {
                 var stream: DirectoryStream[Path] = Files.newDirectoryStream(subDir)
                 for(file <- stream) {
