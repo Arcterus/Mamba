@@ -30,7 +30,7 @@ object Server {
     }
     
     def loadConf(): Void = {
-        val data = this.readAll(new FileInputStream("/etc/mamba.conf").getChannel())
+        val data: String = this.readAll(new FileInputStream("/etc/mamba.conf").getChannel())
         var currentWord: String = ""
         var ignore: Boolean = false
         var inQuote: Boolean = false
