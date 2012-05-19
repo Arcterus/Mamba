@@ -109,7 +109,7 @@ class Request extends Actor {
     }
     
     private def listDir(path: Path): Array[String] = {
-        val files = new ArrayBuffer(20)
+        val files = new ArrayBuffer[String](20)
         var rootDir: Iterable[Path] = path.asScala
         for(subDir <- rootDir) {
             files += subDir.toAbsolutePath().toString
