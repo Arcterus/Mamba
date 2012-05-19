@@ -95,7 +95,7 @@ object Server {
         var result: String = ""
         var buffer: ByteBuffer = ByteBuffer.allocate(1024)
         while(file.read(buffer) != -1) {
-            result += (/*(ByteBuffer)*/ (buffer.flip())).asCharBuffer().get(0)
+            result += ((buffer.flip()).asInstanceOf[ByteBuffer]).asCharBuffer().get(0)
             buffer.clear()
         }
         return result
