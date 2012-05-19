@@ -105,7 +105,7 @@ object Server {
         var result: String = ""
         var buffer: ByteBuffer = ByteBuffer.allocate(1024)
         while(file.read(buffer) != -1) {
-            result += ((buffer.flip()).asInstanceOf[ByteBuffer]).asCharBuffer().get(0)
+            result += ((buffer.flip()).asInstanceOf[ByteBuffer]).toString()
             buffer.clear()
         }
         return result
@@ -119,14 +119,14 @@ class Request extends Actor {
                 try {
                     var buffer: ByteBuffer = ByteBuffer.allocate(2048)
                     socket.read(buffer)
-                    val directory = Server.fileDir + ((buffer.flip()).asInstanceOf[ByteBuffer]).asCharBuffer().get(0) + "/"
+                    val directory = Server.fileDir + ((buffer.flip()).asInstanceOf[ByteBuffer]).toString() + "/"
                     buffer.clear()
                     val filelist = listDir(directory)
                     for((filename: String) <- filelist) {
                         socket.write(ByteBuffer.wrap(filename.getBytes("UTF-8")))
                     }
                     socket.read(buffer)
-                    val filename = ((buffer.flip()).asInstanceOf[ByteBuffer]).asCharBuffer().get(0)
+                    val filename = ((buffer.flip()).asInstanceOf[ByteBuffer]).toString()
                     if(isDirectory(directory + filename) == true) {
                         val newfilelist = listDir(directory + filename)
                         socket.write(ByteBuffer.wrap("directory: \n".getBytes("UTF-8")))
@@ -134,10 +134,10 @@ class Request extends Actor {
                             socket.write(ByteBuffer.wrap(newfiles.getBytes("UTF-8")))
                         }
                     } else {
-                        var file: FileChannel = new FileInputStream(filename).getChannel()
+                        var file: FileChannel = (new FileInputStream(filename)).getChannel()
                         socket.write(ByteBuffer.wrap("file: \n".getBytes("UTF-8")))
                         while(file.read(buffer) != -1) {
-                            socket.write(((buffer.flip()).asInstanceOf[ByteBuffer]).asCharBuffer().get(0))
+                            socket.write(((buffer.flip()).asInstanceOf[ByteBuffer]).toString())
                             buffer.clear()
                         }
                     }
