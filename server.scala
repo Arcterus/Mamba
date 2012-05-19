@@ -112,8 +112,8 @@ class Request extends Actor {
         for(subDir <- rootDir) {
             files.append(subDir.toAbsolutePath().toString())
             try {
-                var stream: DirectoryStream[Path] = Files.newDirectoryStream(subDir).asScala
-                for(file <- stream) {
+                var stream: DirectoryStream[Path] = Files.newDirectoryStream(subDir)
+                for(file <- stream.asScala) {
                     files.append(file.toAbsolutePath().toString())
                 }
             }
