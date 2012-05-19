@@ -121,18 +121,16 @@ class Request extends Actor {
                     socket.read(buffer)
                     val directory = Server.fileDir + ((buffer.flip()).asInstanceOf[ByteBuffer]).asCharBuffer().get(0) + "/"
                     buffer.clear()
-                    {
-                        val filelist = listDir(directory)
-                        for(filename <- filelist) {
-                            socket.write(ByteBuffer.wrap(filename.getBytes("UTF-8")))
-                        }
+                    val filelist = listDir(directory)
+                    for(filename <- filelist) {
+                        socket.write(ByteBuffer.wrap(filename.getBytes("UTF-8")))
                     }
                     socket.read(buffer)
                     val filename = ((buffer.flip()).asInstanceOf[ByteBuffer]).asCharBuffer().get(0)
                     if(isDirectory(directory + filename) == true) {
-                        val filelist = listDir(directory + filename)
+                        val newfilelist = listDir(directory + filename)
                         socket.write("directory: \n")
-                        for(newfiles <- filelist) {
+                        for(newfiles <- newfilelist) {
                             socket.write(ByteBuffer.wrap(filename.getBytes("UTF-8")))
                         }
                     } else {
@@ -142,7 +140,6 @@ class Request extends Actor {
                             socket.write(((buffer.flip()).asInstanceOf[ByteBuffer]).asCharBuffer().get(0))
                             buffer.clear()
                         }
-                        file.close()
                     }
                     act()
                 } catch {
@@ -175,10 +172,8 @@ class Request extends Actor {
         try {
             var file: File = new File(filename)
             if(file.isDirectory) {
-                file.close()
                 return true
             } else {
-                file.close()
                 return false
             }
         } catch {
