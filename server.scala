@@ -36,19 +36,19 @@ object Server {
         var inQuote: Boolean = false
         var prevChar: Char = '\0'
         var operation: Symbol = 'none
-        def alphaFunc(ch: Char, ignore: Boolean, currentWord: String): Void = {
+        def alphaFunc(ch: Char, ignore: Boolean): Void = {
             if(ignore == false) {
-                currentWord += ch.toString()
+                return ch.toString()
             }
         }
         for((ch: Char) <- data) {
             ch match {
                 case ch if 'a' until 'z' contains ch =>
-                    alphaFunc(ch, ignore, currentWord)
+                    currentWord += alphaFunc(ch, ignore)
                 case ch if 'A' until 'Z' contains ch =>
-                    alphaFunc(ch, ignore, currentWord)
+                    currentWord += alphaFunc(ch, ignore)
                 case ch if '0' until '9' contains ch | '_' =>
-                    alphaFunc(ch, ignore, currentWord)
+                    currentWord += alphaFunc(ch, ignore)
                 case '#' =>
                     if(inQuote == true) {
                         currentWord += "#"
@@ -84,7 +84,7 @@ object Server {
                     }
                 case '\\' =>
                     // ignore, but allow
-                _ =>
+                case _ =>
                     // Do nothing for now
             }
             prevChar = ch
@@ -112,7 +112,7 @@ class Request extends Actor {
         for(subDir <- rootDir) {
             files.append(subDir.toAbsolutePath().toString())
             try {
-                var stream: DirectoryStream[Path] = Files.newDirectoryStream(subDir)
+                var stream: DirectoryStream[Path] = Files.newDirectoryStream(subDir).asScala
                 for(file <- stream) {
                     files.append(file.toAbsolutePath().toString())
                 }
