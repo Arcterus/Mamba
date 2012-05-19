@@ -39,6 +39,8 @@ object Server {
         def alphaFunc(ch: Char, ignore: Boolean): String = {
             if(ignore == false) {
                 return ch.toString
+            } else {
+                return ""
             }
         }
         for((ch: Char) <- data) {
