@@ -38,7 +38,7 @@ object Server {
         var operation: Symbol = 'none
         def alphaFunc(ch: Char, ignore: Boolean): Void = {
             if(ignore == false) {
-                return ch.toString()
+                return ch.toString
             }
         }
         for((ch: Char) <- data) {
@@ -110,14 +110,14 @@ class Request extends Actor {
         val files = new ArrayBuffer(20)
         var rootDir: Iterable[Path] = path.asScala
         for(subDir <- rootDir) {
-            files.append(subDir.toAbsolutePath().toString())
+            files.append(subDir.toAbsolutePath().toString)
             try {
                 var stream: DirectoryStream[Path] = Files.newDirectoryStream(subDir)
                 for(file <- stream.asScala) {
-                    files.append(file.toAbsolutePath().toString())
+                    files.append(file.toAbsolutePath().toString)
                 }
             }
         }
-        return files.toArray()
+        return files.toArray
     }
 }
