@@ -33,7 +33,7 @@ object Server {
         }
     }
     
-    def loadConf(): Void = {
+    def loadConf(): Unit = {
         val data = this.readAll(new FileInputStream("/etc/mamba.conf").getChannel())
         var currentWord: String = ""
         var ignore: Boolean = false
@@ -134,7 +134,7 @@ class Request extends Actor {
                             socket.write(ByteBuffer.wrap(newfiles.getBytes("UTF-8")))
                         }
                     } else {
-                        var file: FileChannel = (new FileInputStream(filename)).getChannel()
+                        var file: FileChannel = new FileInputStream(filename).getChannel()
                         socket.write(ByteBuffer.wrap("file: \n".getBytes("UTF-8")))
                         while(file.read(buffer) != -1) {
                             socket.write(((buffer.flip()).asInstanceOf[ByteBuffer]))
