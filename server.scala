@@ -122,7 +122,7 @@ class Request extends Actor {
                     val directory = Server.fileDir + ((buffer.flip()).asInstanceOf[ByteBuffer]).asCharBuffer().get(0) + "/"
                     buffer.clear()
                     val filelist = listDir(directory)
-                    for(filename <- filelist) {
+                    for((filename: String) <- filelist) {
                         socket.write(ByteBuffer.wrap(filename.getBytes("UTF-8")))
                     }
                     socket.read(buffer)
@@ -130,7 +130,7 @@ class Request extends Actor {
                     if(isDirectory(directory + filename) == true) {
                         val newfilelist = listDir(directory + filename)
                         socket.write(ByteBuffer.wrap("directory: \n".getBytes("UTF-8")))
-                        for(newfiles <- newfilelist) {
+                        for((newfiles: String) <- newfilelist) {
                             socket.write(ByteBuffer.wrap(filename.getBytes("UTF-8")))
                         }
                     } else {
