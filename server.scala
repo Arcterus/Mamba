@@ -94,8 +94,8 @@ object Server {
     private def readAll(file: FileChannel): String = {
         var result: String = ""
         var buffer: ByteBuffer = ByteBuffer.allocate(1024)
-        while(buffer.read(file) != -1) {
-            result += ((ByteBuffer) (buffer.flip())).asCharBuffer().get(0)
+        while(file.read(buffer) != -1) {
+            result += (/*(ByteBuffer)*/ (buffer.flip())).asCharBuffer().get(0)
             buffer.clear()
         }
         return result
@@ -114,7 +114,7 @@ class Request extends Actor {
             try {
                 var stream: DirectoryStream[Path] = Files.newDirectoryStream(subDir)
                 for(file <- stream) {
-                    files.append(file.getFileName())
+                    files.append(file.toAbsolutePath().toString())
                 }
             }
         }
