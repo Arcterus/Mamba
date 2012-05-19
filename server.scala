@@ -131,7 +131,7 @@ class Request extends Actor {
                         val newfilelist = listDir(directory + filename)
                         socket.write(ByteBuffer.wrap("directory: \n".getBytes("UTF-8")))
                         for((newfiles: String) <- newfilelist) {
-                            socket.write(ByteBuffer.wrap(filename.getBytes("UTF-8")))
+                            socket.write(ByteBuffer.wrap(newfiles.getBytes("UTF-8")))
                         }
                     } else {
                         var file: FileChannel = new FileInputStream(filename).getChannel()
