@@ -18,10 +18,14 @@ object Server {
             val server = ServerSocketChannel.open()
             server.configureBlocking(false)
             server.socket().bind(new InetSocketAddress(457))
-            var socket: SocketChannel = server.accept()
-            if(socket != null) {
-                // Request
-                (new Request).start()
+            while(true) {
+                var socket: SocketChannel = server.accept()
+                if(socket != null) {
+                    // Request
+                    val request = new Request
+                    request.start()
+                    request ! socket
+                }
             }
         } catch {
             case ex: IOException =>
@@ -30,7 +34,7 @@ object Server {
     }
     
     def loadConf(): Void = {
-        val data: String = this.readAll(new FileInputStream("/etc/mamba.conf").getChannel())
+        val data = this.readAll(new FileInputStream("/etc/mamba.conf").getChannel())
         var currentWord: String = ""
         var ignore: Boolean = false
         var inQuote: Boolean = false
@@ -87,7 +91,11 @@ object Server {
                 case '\\' =>
                     // ignore, but allow
                 case _ =>
-                    // Do nothing for now
+                    if(inQuote == true) {
+                        currentWord += ch.toString
+                    } else if(ignore == false) {
+                        // Do nothing for now, but throw error later
+                    }
             }
             prevChar = ch
         }
@@ -106,6 +114,46 @@ object Server {
 
 class Request extends Actor {
     def act() = {
+        react {
+            case socket: SocketChannel =>
+                try {
+                    var buffer: ByteBuffer = ByteBuffer.allocate(2048)
+                    socket.read(buffer)
+                    val directory = Server.fileDir + ((buffer.flip()).asInstanceOf[ByteBuffer]).asCharBuffer().get(0) + "/"
+                    buffer.clear()
+                    {
+                        val filelist = listDir(directory)
+                        for(filename <- filelist) {
+                            socket.write(ByteBuffer.wrap(filename.getBytes("UTF-8")))
+                        }
+                    }
+                    socket.read(buffer)
+                    val filename = ((buffer.flip()).asInstanceOf[ByteBuffer]).asCharBuffer().get(0)
+                    if(isDirectory(directory + filename) == true) {
+                        val filelist = listDir(directory + filename)
+                        socket.write("directory: \n")
+                        for(newfiles <- filelist) {
+                            socket.write(ByteBuffer.wrap(filename.getBytes("UTF-8")))
+                        }
+                    } else {
+                        var file: FileChannel = new FileInputStream(filename).getChannel()
+                        socket.write("file: \n")
+                        while(file.read(buffer) != -1) {
+                            socket.write(((buffer.flip()).asInstanceOf[ByteBuffer]).asCharBuffer().get(0))
+                            buffer.clear()
+                        }
+                        file.close()
+                    }
+                    act()
+                } catch {
+                    case IOException =>
+                        var buffer: ByteBuffer = ByteBuffer.allocate(2048)
+                        for((ch: Char) <- "alert: Error opening file") {
+                            buffer.putChar(ch)
+                        }
+                        socket.write(buffer)
+                }
+        }
     }
     
     private def listDir(path: Path): Array[String] = {
@@ -121,5 +169,21 @@ class Request extends Actor {
             }
         }
         return files.toArray
+    }
+    
+    private def isDirectory(filename: String): Boolean = {
+        try {
+            var file: File = new File(filename)
+            if(file.isDirectory) {
+                file.close()
+                return true
+            } else {
+                file.close()
+                return false
+            }
+        } catch {
+            case IOException =>
+                return false
+        }
     }
 }
