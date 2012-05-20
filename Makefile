@@ -1,6 +1,7 @@
 all: mamba
 
 mamba:
+	mkdir bin
 	cd src && make
 
 .PHONY: mamba uninstall install clean
