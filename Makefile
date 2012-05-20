@@ -1,10 +1,7 @@
 all: mamba
 
-OUTPUT = mamba/server.class
-
 mamba:
-	scalac mamba/server.scala
-	jar cfm mamba.jar mamba.manifest -C mamba/ .
+	cd src && make
 
 .PHONY: mamba uninstall install clean
 
