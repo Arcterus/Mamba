@@ -1,0 +1,2 @@
+Main-Class: mamba.Server
+Class-Path: . scala-library.jar

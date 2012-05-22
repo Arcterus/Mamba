@@ -1,10 +1,8 @@
 all: mamba
 
-OUTPUT = mamba/server.class
-
 mamba:
 	scalac mamba/server.scala
-	jar cfm ../bin/mamba.jar ../mamba.manifest $(OUTPUT) .
+	jar cfm ../bin/mamba.jar ../mamba.manifest mamba/*.class  -C ../lib/ .
 
 .PHONY: mamba clean
 
