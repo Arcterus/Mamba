@@ -1,95 +1,96 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <project name="mamba" basedir="." default="build">
-	<property name="sources.dir" value="${basedir}/src"/>
-	<property name="build.dir" value="${basedir}/bin"/>
-	<property name="conf.dir" value="${basedir}/conf"/>
-	<target name="set_etc.dir" if="isWindows">
-		<property name="etc.dir" value="C:\Program Files\Mamba\etc"/>
-	</target>
-	<property name="etc.dir" value="/etc"/>
-	<target name="set_bin.dir" if="isWindows">
-		<property name="bin.dir" value="C:\Program Files\Mamba\bin"/>
-	</target>
-	<property name="bin.dir" value="/usr/local/bin"/>
-	<target name="set_mambalib.dir" if="isWindows">
-		<property name="mambalib.dir" value="C:\Program Files\Mamba\var\lib\mamba"/>
-	</target>
-	<property name="mambalib.dir" value="/var/lib/mamba"/>
-
-	<condition property="isWindows">
-		<os family="windows"/>
-	</condition>
-
-	<condition property="isUnix">
-		<os family="unix"/>
-	</condition>
-
-	<target name="build" depends="init">
-		<mkdir dir="${build.dir}"/>
-		<scalac srcdir="${sources.dir}" destdir="${build.dir}" classpathref="build.classpath">
-			<include name="**/*.scala"/>
-		</scalac>
-	</target>
-
-	<target name="package" depends="build">
-		<jar destfile="${build.dir}/mamba.jar">
-			<fileset dir="${build.dir}">
-				<include name="mamba/*.class"/>
-			</fileset>
-			<manifest>
-				<attribute name="Main-Class" value="mamba.Server"/>
-			</manifest>
-		</jar>
-	</target>
-
-	<target name="run" depends="build">
-		<java classname="mamba.Server" classpathref="build.classpath"></java>
-	</target>
-
-	<target name="install" depends="build">
-		<copy todir="${etc.dir}">
-			<fileset dir="${conf.dir}">
-				<include name="*"/>
-			</fileset>
-		</copy>
-		<copy file="${build.dir}/mamba" todir="${bin.dir}"/>
-		<copy file="${build.dir}/mamba.jar" todir="${mambalib.dir}"/>
-	</target>
-
-	<target name="uninstall">
-		<delete>
-			<fileset dir="${etc.dir}">
-				<include name="**/mamba.*"/>
-			</fileset>
-		</delete>
-		<delete file="${bin.dir}/mamba"/>
-		<delete file="${mambalib.dir}/mamba.jar"/>
-	</target>
-
-	<target name="clean">
-		<delete dir="${build.dir}"/>
-		<delete>
-			<fileset dir="${sources.dir}">
-				<include name="**/*.class"/>
-			</fileset>
-		</delete>
-	</target>
-
-	<target name="init">
-		<property name="scala-library.jar" value="${scala_home}/lib/scala-library.jar"/>
-		<property name="scala-actors.jar" value="${scala_home}/lib/scala-actors.jar"/>
-		<path id="build.classpath">
-			<pathelement location="${scala-library.jar}"/>
-			<pathelement location="${scala-actors.jar}"/>
-			<pathelement location="${build.dir}"/>
-		</path>
-		<taskdef resource="scala/tools/ant/antlib.xml">
-			<classpath>
-				<pathelement location="${scala_home}/lib/scala-compiler.jar"/>
-				<pathelement location="${scala-library.jar}"/>
-				<pathelement location="${scala-actors.jar}"/>
-			</classpath>
-		</taskdef>
-	</target>
+  <property name="sources.dir" value="${basedir}/src"/>
+  <property name="build.dir" value="${basedir}/bin"/>
+  <property name="conf.dir" value="${basedir}/conf"/>
+  <target name="set_etc.dir" if="isWindows">
+    <property name="etc.dir" value="C:\Program Files\Mamba\etc"/>
+  </target>
+  <property name="etc.dir" value="/etc"/>
+  <target name="set_bin.dir" if="isWindows">
+    <property name="bin.dir" value="C:\Program Files\Mamba\bin"/>
+  </target>
+  <property name="bin.dir" value="/usr/local/bin"/>
+  <target name="set_mambalib.dir" if="isWindows">
+    <property name="mambalib.dir" value="C:\Program Files\Mamba\var\lib\mamba"/>
+  </target>
+  <property name="mambalib.dir" value="/var/lib/mamba"/>
+  
+  <condition property="isWindows">
+    <os family="windows"/>
+  </condition>
+  
+  <condition property="isUnix">
+    <os family="unix"/>
+  </condition>
+  
+  <target name="build" depends="init, clean">
+    <mkdir dir="${build.dir}"/>
+    <scalac srcdir="${sources.dir}" destdir="${build.dir}" classpathref="build.classpath">
+      <include name="**/*.scala"/>
+    </scalac>
+    <javac srcdir="${sources.dir}" destdir="${build.dir}" classpathref="${build.dir}">
+      <include name="**/*.java"/>
+    </javac>
+  </target>
+  
+  <target name="package" depends="build">
+    <jar destfile="${build.dir}/mamba.jar">
+      <fileset dir="${build.dir}">
+	<include name="mamba/*.class"/>
+      </fileset>
+      <manifest>
+	<attribute name="Main-Class" value="mamba.Server"/>
+      </manifest>
+    </jar>
+  </target>
+  
+  <target name="run" depends="build">
+    <java classname="mamba.Server" classpathref="build.classpath"></java>
+  </target>
+  
+  <target name="install" depends="build">
+    <copy todir="${etc.dir}">
+      <fileset dir="${conf.dir}">
+	<include name="*"/>
+      </fileset>
+    </copy>
+    <copy file="${build.dir}/mamba" todir="${bin.dir}"/>
+    <copy file="${build.dir}/mamba.jar" todir="${mambalib.dir}"/>
+  </target>
+  
+  <target name="uninstall">
+    <delete>
+      <fileset dir="${etc.dir}">
+	<include name="**/mamba.*"/>
+      </fileset>
+    </delete>
+    <delete file="${bin.dir}/mamba"/>
+    <delete file="${mambalib.dir}/mamba.jar"/>
+  </target>
+  
+  <target name="clean">
+    <delete dir="${build.dir}"/>
+    <delete>
+      <fileset dir="${sources.dir}">
+	<include name="**/*.class"/>
+      </fileset>
+    </delete>
+  </target>
+  
+  <target name="init">
+    <property name="scala-library.jar" value="${scala_home}/lib/scala-library.jar"/>
+    <path id="build.classpath">
+      <pathelement location="${scala-library.jar}"/>
+      <pathelement location="${build.dir}"/>
+    </path>
+    <taskdef resource="scala/tools/ant/antlib.xml">
+      <classpath>
+	<pathelement location="${scala_home}/lib/scala-compiler.jar"/>
+	<pathelement location="${scala-library.jar}"/>
+	<pathelement location="${scala-actors.jar}"/>
+      </classpath>
+    </taskdef>
+  </target>
 </project>

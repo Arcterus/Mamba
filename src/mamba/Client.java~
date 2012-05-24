@@ -1,0 +1,49 @@
+package mamba;
+
+import java.nio.channels.*;
+import java.nio.ByteBuffer;
+import java.net.*;
+import java.awt.*;
+import javax.swing.*;
+import javax.swing.tree.*;
+
+public class Client {
+    Client() {
+	JFrame frame = new JFrame("Mamba Client");
+	frame.setSize(500, 500);
+	frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+	ClientData data = new ClientData(new InetSocketAddress("http://localhost", 8080));
+	data.start();
+	DefaultMutableTreeNode root = new DefaultMutableTreeNode("");
+	JTree tree = new JTree(root);
+	JScrollPane scroll = new JScrollPane(true);
+	frame.getContentPane().add(scroll, BorderLayout.Center);
+	frame.setVisible(true);
+    }
+
+    public static void main(String[] args) {
+	SwingUtilities.invokeLater(new Runnable() {
+		public void run() {
+		    new Client();
+		}
+	    });
+    }
+}
+
+class ClientData extends Thread {
+    private SocketChannel socket;
+    private InetSocketAddress address;
+
+    ClientData(InetSocketAddress address) {
+	this.address = address;
+    }
+
+    public void run() {
+	this.socket.open();
+	this.socket.connect(address);
+	while(this.socket.isConnected()) {
+	    
+	}
+	this.socket.close();
+    }
+}

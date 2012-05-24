@@ -1,6 +1,7 @@
 package mamba
 
 import java.nio.channels._
+import java.nio.file.FileVisitResult._
 import java.nio.file._
 import java.nio.ByteBuffer
 import java.io._
@@ -11,13 +12,14 @@ import scala.collection.JavaConverters._
 
 object Server {
     var fileDir: String = ""
+    var servedFiles: ArrayBuffer = new ArrayBuffer[Array[String]](40)
     
     def main(args: Array[String]) = {
         try {
             this.loadConf()
             val server = ServerSocketChannel.open()
             server.configureBlocking(false)
-            server.socket().bind(new InetSocketAddress(457))
+            server.socket().bind(new InetSocketAddress(/*457*/8080))
             while(true) {
                 var socket: SocketChannel = server.accept()
                 if(socket != null) {
@@ -119,9 +121,13 @@ class Request extends Actor {
                 try {
                     var buffer: ByteBuffer = ByteBuffer.allocate(2048)
                     socket.read(buffer)
-                    val directory = Server.fileDir + ((buffer.flip()).asInstanceOf[ByteBuffer]).toString() + "/"
+		    var filelist: ArrayBuffer = new ArrayBuffer[String](20)
+		    val directory: Array[String] = Server.fileDir + ((buffer.flip()).asInstanceOf[ByteBuffer]).toString() + "/"
+                    do {
+		       
+		    } while(
                     buffer.clear()
-                    val filelist = listDir(directory)
+                    filelist += listDir(directory)
                     for((filename: String) <- filelist) {
                         socket.write(ByteBuffer.wrap(filename.getBytes("UTF-8")))
                     }
@@ -182,5 +188,15 @@ class Request extends Actor {
                 ex.printStackTrace()
                 return false
         }
+    }
+}
+
+class WalkDir extends SimpleFileVisitor[Path] {
+    override visitFile(file: Path, attr: BasicFileAttributes): FileVisitResult = {
+        if(file.isDirectory()) {
+	    
+	} else {
+	    
+	}
     }
 }
