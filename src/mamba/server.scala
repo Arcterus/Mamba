@@ -1,18 +1,18 @@
 package mamba
 
 import java.nio.channels._
-import java.nio.file.FileVisitResult._
 import java.nio.file._
 import java.nio.ByteBuffer
 import java.io._
 import java.net._
 import scala.actors._
+import scala.xml._
 import scala.collection.mutable.ArrayBuffer
 import scala.collection.JavaConverters._
 
 object Server {
     var fileDir: String = ""
-    var servedFiles: ArrayBuffer = new ArrayBuffer[Array[String]](40)
+    val userList = XML.loadFile("/etc/mamba.d/users.xml")
     
     def main(args: Array[String]) = {
         try {
@@ -115,47 +115,136 @@ object Server {
 }
 
 class Request extends Actor {
-    def act() = {
+    def act(): Unit = {
         react {
             case socket: SocketChannel =>
                 try {
+		    var directory: String = Server.fileDir
                     var buffer: ByteBuffer = ByteBuffer.allocate(2048)
+		    socket.write(ByteBuffer.wrap("Login Please:\f".getBytes("UTF-8")))
                     socket.read(buffer)
-		    var filelist: ArrayBuffer = new ArrayBuffer[String](20)
-		    val directory: Array[String] = Server.fileDir + ((buffer.flip()).asInstanceOf[ByteBuffer]).toString() + "/"
-                    do {
-		       
-		    } while(
-                    buffer.clear()
-                    filelist += listDir(directory)
-                    for((filename: String) <- filelist) {
-                        socket.write(ByteBuffer.wrap(filename.getBytes("UTF-8")))
-                    }
-                    socket.read(buffer)
-                    val filename = ((buffer.flip()).asInstanceOf[ByteBuffer]).toString()
-                    if(isDirectory(directory + filename) == true) {
-                        val newfilelist = listDir(directory + filename)
-                        socket.write(ByteBuffer.wrap("directory: \n".getBytes("UTF-8")))
-                        for((newfiles: String) <- newfilelist) {
-                            socket.write(ByteBuffer.wrap(newfiles.getBytes("UTF-8")))
+		    if(((buffer.flip()).asInstanceOf[ByteBuffer]).toString().compare("Username:\f") == 0) {
+		        buffer.clear()
+			val username = ((buffer.flip()).asInstanceOf[ByteBuffer]).asCharBuffer().toString()
+			buffer.clear()
+			if(((buffer.flip()).asInstanceOf[ByteBuffer]).asCharBuffer().toString().compare("Password:\f") == 0) {
+			    buffer.clear()
+			    val password = ((buffer.flip()).asInstanceOf[ByteBuffer]).toString()
+		            for((user: NodeSeq) <- Server.userList \\ "user") {
+			        if((user \\ "@name").text.compare(username) == 0 & (user \\ "password").text.compare(password) == 0) {
+				    directory += "/" + username
+				}
+			    }
+			    if(directory.compare(Server.fileDir) == 0) {
+			        // Invalid username or password
+				socket.write(ByteBuffer.wrap("Alert:\f".getBytes("UTF-8")))
+				socket.write(ByteBuffer.wrap("Invalid username or password".getBytes("UTF-8")))
+				socket.write(ByteBuffer.wrap("\f\f".getBytes("UTF-8")))
+				return
+			    }
+			} else {
+			    // Client error
+			    socket.write(ByteBuffer.wrap("Alert:\f".getBytes("UTF-8")))
+			    socket.write(ByteBuffer.wrap(("Unexpected command: " + ((buffer.flip()).asInstanceOf[ByteBuffer]).asCharBuffer().toString).getBytes("UTF-8")))
+			    socket.write(ByteBuffer.wrap("\f\f".getBytes("UTF-8")))
+			    return
+			}
+		    } else {
+		        // Client error
+			socket.write(ByteBuffer.wrap("Alert:\f".getBytes("UTF-8")))
+			socket.write(ByteBuffer.wrap(("Unexpected command: " + ((buffer.flip()).asInstanceOf[ByteBuffer]).asCharBuffer().toString()).getBytes("UTF-8")))
+			socket.write(ByteBuffer.wrap("\f\f".getBytes("UTF-8")))
+			return
+		    }
+		    var dirContents: ArrayBuffer[String] = new ArrayBuffer[String](40)
+		    val rootContents = listDir(directory)
+		    for((file: String) <- rootContents) {
+		        dirContents += "root"
+		        dirContents += file
+		    }
+		    var location: String = null
+		    var odd: Boolean = true
+                    for((file: String) <- dirContents) {
+		        if(odd) {
+			    odd = false
+			    location = file
+			} else {
+			    odd = true
+		            if(isDirectory(file)) {
+			        val subdirContents = listDir(file)
+			        for((subdirFile: String) <- subdirContents) {
+				    dirContents += file
+			            dirContents += subdirFile
+			        }
+			        socket.write(ByteBuffer.wrap("Show Directory:\f".getBytes("UTF-8")))
+			    } else {
+			        socket.write(ByteBuffer.wrap("Show File:\f".getBytes("UTF-8")))
+			    }
+			    socket.write(ByteBuffer.wrap(location.getBytes("UTF-8")))
+			    socket.write(ByteBuffer.wrap(file.getBytes("UTF-8")))
+			    socket.write(ByteBuffer.wrap("\f\f".getBytes("UTF-8")))
+			}
+		    }
+		    while(socket.isConnected()) {
+                        socket.read(buffer)
+                        val filename = ((buffer.flip()).asInstanceOf[ByteBuffer]).asCharBuffer.toString()
+                        if(isDirectory(filename) == true) {
+			    dirContents = dirContents.drop(dirContents.length)
+			    location = Server.fileDir + "/" + filename + "/"
+                            socket.write(ByteBuffer.wrap("Directory:\f".getBytes("UTF-8")))
+			    socket.write(ByteBuffer.wrap(location.getBytes("UTF-8")))
+			    socket.write(ByteBuffer.wrap("\f\f".getBytes("UTF-8")))
+			    for((file: String) <- dirContents) {
+		                if(odd) {
+			            odd = false
+			            location = file
+			        } else {
+			            odd = true
+		                    if(isDirectory(file)) {
+			                val subdirContents = listDir(file)
+			                for((subdirFile: String) <- subdirContents) {
+					    dirContents += file
+			                    dirContents += subdirFile
+			                }
+			                socket.write(ByteBuffer.wrap("Directory:\f".getBytes("UTF-8")))
+					socket.write(ByteBuffer.wrap(location.getBytes("UTF-8")))
+					socket.write(ByteBuffer.wrap(file.getBytes("UTF-8")))
+			            } else {
+			                socket.write(ByteBuffer.wrap("File:\f".getBytes("UTF-8")))
+					socket.write(ByteBuffer.wrap((location + file).getBytes("UTF-8")))
+					var fchannel: FileChannel = new FileInputStream(file).getChannel()
+					var filedata: String = ""
+					buffer.clear()
+					while(fchannel.read(buffer) != -1) {
+					    filedata += ((buffer.flip()).asInstanceOf[ByteBuffer]).asCharBuffer().toString()
+					    buffer.clear()
+					}
+					socket.write(ByteBuffer.wrap(filedata.getBytes("UTF-8")))
+			            }
+			            socket.write(ByteBuffer.wrap("\f\f".getBytes("UTF-8")))
+			        }
+			    }
+                        } else {
+                            socket.write(ByteBuffer.wrap("File:\f".getBytes("UTF-8")))
+			    socket.write(ByteBuffer.wrap((location + filename).getBytes("UTF-8")))
+			    var fchannel: FileChannel = new FileInputStream(filename).getChannel()
+			    var filedata: String = ""
+			    buffer.clear()
+			    while(fchannel.read(buffer) != -1) {
+			        filedata += ((buffer.flip()).asInstanceOf[ByteBuffer]).asCharBuffer().toString()
+			        buffer.clear()
+			    }
+			    socket.write(ByteBuffer.wrap(filedata.getBytes("UTF-8")))
+			    socket.write(ByteBuffer.wrap("\f\f".getBytes("UTF-8")))
                         }
-                    } else {
-                        var file: FileChannel = new FileInputStream(filename).getChannel()
-                        socket.write(ByteBuffer.wrap("file: \n".getBytes("UTF-8")))
-                        while(file.read(buffer) != -1) {
-                            socket.write(((buffer.flip()).asInstanceOf[ByteBuffer]))
-                            buffer.clear()
-                        }
+			buffer.clear()
                     }
-                    act()
                 } catch {
                     case ex: IOException =>
                         ex.printStackTrace()
-                        var buffer: ByteBuffer = ByteBuffer.allocate(2048)
-                        for((ch: Char) <- "alert: Error opening file") {
-                            buffer.putChar(ch)
-                        }
-                        socket.write(buffer)
+			socket.write(ByteBuffer.wrap("Alert:\f".getBytes("UTF-8")))
+			socket.write(ByteBuffer.wrap("Error opening file".getBytes("UTF-8")))
+			socket.write(ByteBuffer.wrap("\f\f".getBytes("UTF-8")))
                 }
         }
     }
@@ -164,11 +253,11 @@ class Request extends Actor {
         val files = new ArrayBuffer[String](20)
         var rootDir: Iterable[Path] = Paths.get(path).asScala
         for(subDir <- rootDir) {
-            files += subDir.toAbsolutePath().toString
+            files += subDir.toString
             try {
                 var stream: DirectoryStream[Path] = Files.newDirectoryStream(subDir)
                 for(file <- stream.asScala) {
-                    files += file.toAbsolutePath().toString
+                    files += file.toString
                 }
             }
         }
@@ -188,15 +277,5 @@ class Request extends Actor {
                 ex.printStackTrace()
                 return false
         }
-    }
-}
-
-class WalkDir extends SimpleFileVisitor[Path] {
-    override visitFile(file: Path, attr: BasicFileAttributes): FileVisitResult = {
-        if(file.isDirectory()) {
-	    
-	} else {
-	    
-	}
     }
 }

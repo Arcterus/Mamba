@@ -30,7 +30,7 @@
     <scalac srcdir="${sources.dir}" destdir="${build.dir}" classpathref="build.classpath">
       <include name="**/*.scala"/>
     </scalac>
-    <javac srcdir="${sources.dir}" destdir="${build.dir}" classpathref="${build.dir}">
+    <javac srcdir="${sources.dir}" destdir="${build.dir}" classpathref="build.classpath">
       <include name="**/*.java"/>
     </javac>
   </target>

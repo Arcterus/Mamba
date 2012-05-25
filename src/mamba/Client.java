@@ -3,7 +3,10 @@ package mamba;
 import java.nio.channels.*;
 import java.nio.file.*;
 import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
 import java.io.*;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.net.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -14,7 +17,8 @@ public class Client implements ActionListener {
     public int shortcut = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
     public boolean isWindows = System.getProperty("os.name").startsWith("Windows") ? true : false;
     public String downloadDir = System.getProperty("user.home") + "/Downloads";
-    private JFrame frame;
+    private static JFrame frame;
+    protected static DefaultMutableTreeNode root;
     private ClientData data;
 
     Client() {
@@ -41,9 +45,7 @@ public class Client implements ActionListener {
 	fileup.addActionListener(this);
 	goconnect.addActionListener(this);
 	frame.setJMenuBar(menubar);
-	ClientData data = new ClientData(new InetSocketAddress("http://localhost", 8080));
-	data.start();
-	DefaultMutableTreeNode root = new DefaultMutableTreeNode("");
+	root = new DefaultMutableTreeNode("");
 	JTree tree = new JTree(root);
 	JScrollPane scroll = new JScrollPane(tree);
 	frame.getContentPane().add(scroll, BorderLayout.CENTER);
@@ -65,12 +67,18 @@ public class Client implements ActionListener {
 			// Ignore, needed to satisfy compiler
 		    }
 		}
-		this.data = new ClientData(new InetSocketAddress(url, 8080));
+	    }
+	    try {
+		this.data = new ClientData(new InetSocketAddress(InetAddress.getByName(url), 8080));
+	    } catch(UnknownHostException ex) {
+		ex.printStackTrace();
+	    } finally {
+		this.data.start();
 	    }
 	}
     }
 
-    public void login(SocketChannel socket) {
+    protected static boolean login(SocketChannel socket) {
 	Object[] options = { new JLabel("Username"),
 			     new JTextField(50),
 			     new JLabel("Password"),
@@ -85,9 +93,35 @@ public class Client implements ActionListener {
 				     options,
 				     "OK");
 	if(response == 0) {
-	    socket.write(ByteBuffer.wrap(("Username:\v" + options[1].paramString() + "\v").getBytes("UTF-8")));
-	    socket.write(ByteBuffer.wrap(("Password:\v" + new String(options[3].getPassword()) + "\v").getBytes("UTF-8")));
+	    try {
+		socket.write(ByteBuffer.wrap("Username:\\x0c".getBytes("UTF-8")));
+		socket.write(ByteBuffer.wrap((((JTextField) options[1]).getText() + "\\x0c").getBytes("UTF-8")));
+		socket.write(ByteBuffer.wrap("\\x0c\\x0c".getBytes("UTF-8")));
+		MessageDigest digest = MessageDigest.getInstance("MD5");
+		digest.update((new String(((JPasswordField) options[3]).getPassword())).getBytes("UTF-8"));
+		socket.write(ByteBuffer.wrap("Password:\\x0c".getBytes("UTF-8")));
+		socket.write(ByteBuffer.wrap(digest.digest()));
+		socket.write(ByteBuffer.wrap("\\x0c\\x0c".getBytes("UTF-8")));
+	    } catch(IOException ex) {
+		ex.printStackTrace();
+		return false;
+	    } catch(NoSuchAlgorithmException ex) {
+		ex.printStackTrace();
+	    }
 	}
+	root.setUserObject(((JTextField) options[1]).getText());
+	return true;
+    }
+
+    protected static void alert(ByteBuffer data) {
+	JOptionPane.showMessageDialog(frame,
+				      (((ByteBuffer) data.flip()).asCharBuffer().toString()));
+    }
+
+    protected static DefaultMutableTreeNode addTreeNode(String name, DefaultMutableTreeNode parent) {
+	DefaultMutableTreeNode newNode = new DefaultMutableTreeNode(name);
+	parent.add(newNode);
+	return newNode;
     }
 
     public static void main(String[] args) {
@@ -120,27 +154,62 @@ class ClientData extends Thread {
 		}
 		ByteBuffer buffer = ByteBuffer.allocate(2048);
 		while(socket.read(buffer) != -1) {
-		    String bufstring = ((buffer.flip()).asCharBuffer().toString();
-		    if(bufstring.equals("Please Login:\v")) {
-			login(this.socket);
-		    } else if(bufstring.equals("File:\v")) {
-			buffer.clear();
+		    String bufstring = ((ByteBuffer) buffer.flip()).asCharBuffer().toString();
+		    buffer.clear();
+		    if(bufstring.equals("Please Login:\\x0c")) {
+			if(!Client.login(this.socket)) {
+			    throw new IOException();
+			}
+		    } else if(bufstring.equals("File:\\x0c")) {
 			// Assume server will correctly send filename
-			Path file = Files.createFile(Paths.get(socket.read(buffer)));
-			while(!bufstring.equals("\v")) {
+			socket.read(buffer);
+			Path file = Files.createFile(Paths.get(((ByteBuffer) buffer.flip()).asCharBuffer().toString()));
+			while(!bufstring.equals("\\x0c\\x0c")) {
 			    buffer.clear();
 			    if(socket.read(buffer) != -1) {
-				byte[] bytes;
+				ByteArrayOutputStream bytes = new ByteArrayOutputStream();
 				while(buffer.hasRemaining()) {
-				    bytes[bytes.length] = buffer.get();
+				    bytes.write(buffer.get());
 				}
-				Files.write(file, bytes);
+				Files.write(file, bytes.toByteArray());
 			    } else {
-				// Either server messed up or connected went away
+				// Either server messed up or connection went away
 			    }
 			}
-		    } else if(bufstring.equals("Directory:\v")) {
+		    } else if(bufstring.equals("Directory:\\x0c")) {
+			socket.read(buffer);
+			Path dir = Files.createFile(Paths.get(((ByteBuffer) buffer.flip()).asCharBuffer().toString()));
+			while(!bufstring.equals("\\x0c\\x0c")) {
+			    buffer.clear();
+			    if(socket.read(buffer) != -1) {
+				bufstring = ((ByteBuffer) buffer.flip()).asCharBuffer().toString();
+				if(bufstring.equals("File:\\x0c")) {
+				    
+				} else if(bufstring.equals("Directory:\\x0c")) {
+				    
+				} else {
+				    System.err.println("Unknown command: " + bufstring);
+				}
+			    } else {
+				// Either server messed up or connection went away
+			    }
+			}
+		    } else if(bufstring.equals("Show File:\\x0c")) {
+			if(socket.read(buffer) != -1) {
+			    String location = ((ByteBuffer) buffer.flip()).asCharBuffer().toString();
+			    buffer.clear();
+			    //Client.addTreeNode(
+			} else {
+			    // Either server messed up or connection went away
+			}
+		    } else if(bufstring.equals("Show Directory:\\x0c")) {
 			
+		    } else if(bufstring.equals("Alert:\\x0c")) {
+			if(socket.read(buffer) != -1) {
+			    Client.alert(buffer);
+			} else {
+			    // Either server messed up or connection went away
+			}
 		    } else {
 			System.err.println("Unknown command: " + bufstring);
 		    }
@@ -148,6 +217,8 @@ class ClientData extends Thread {
 		}
 	    }
 	    this.socket.close();
+	} catch(NullPointerException ex) {
+	    ex.printStackTrace();
 	} catch(IOException ex) {
 	    ex.printStackTrace();
 	} catch(InterruptedException ex) {
