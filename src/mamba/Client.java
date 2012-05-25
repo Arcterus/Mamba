@@ -67,13 +67,13 @@ public class Client implements ActionListener {
 			// Ignore, needed to satisfy compiler
 		    }
 		}
-	    }
-	    try {
-		this.data = new ClientData(new InetSocketAddress(InetAddress.getByName(url), 8080));
-	    } catch(UnknownHostException ex) {
-		ex.printStackTrace();
-	    } finally {
-		this.data.start();
+		try {
+		    this.data = new ClientData(new InetSocketAddress(InetAddress.getByName(url), 8080));
+		} catch(UnknownHostException ex) {
+		    ex.printStackTrace();
+		} finally {
+		    this.data.start();
+		}
 	    }
 	}
     }
@@ -146,7 +146,7 @@ class ClientData extends Thread {
 
     public void run() {
 	try {
-	    this.socket.open();
+	    this.socket = SocketChannel.open();
 	    this.socket.connect(this.address);
 	    while(this.socket.isConnected()) {
 		if(Thread.interrupted()) {
