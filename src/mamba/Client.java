@@ -94,14 +94,14 @@ public class Client implements ActionListener {
 				     "OK");
 	if(response == 0) {
 	    try {
-		socket.write(ByteBuffer.wrap("Username:\\x0c".getBytes("UTF-8")));
-		socket.write(ByteBuffer.wrap((((JTextField) options[1]).getText() + "\\x0c").getBytes("UTF-8")));
-		socket.write(ByteBuffer.wrap("\\x0c\\x0c".getBytes("UTF-8")));
+		socket.write(ByteBuffer.wrap("Username:\u000C".getBytes("UTF-16")));
+		socket.write(ByteBuffer.wrap((((JTextField) options[1]).getText()).getBytes("UTF-16")));
+		socket.write(ByteBuffer.wrap("\u000C\u000C".getBytes("UTF-16")));
 		MessageDigest digest = MessageDigest.getInstance("MD5");
-		digest.update((new String(((JPasswordField) options[3]).getPassword())).getBytes("UTF-8"));
-		socket.write(ByteBuffer.wrap("Password:\\x0c".getBytes("UTF-8")));
+		digest.update((new String(((JPasswordField) options[3]).getPassword())).getBytes("UTF-16"));
+		socket.write(ByteBuffer.wrap("Password:\u000C".getBytes("UTF-16")));
 		socket.write(ByteBuffer.wrap(digest.digest()));
-		socket.write(ByteBuffer.wrap("\\x0c\\x0c".getBytes("UTF-8")));
+		socket.write(ByteBuffer.wrap("\u000C\u000C".getBytes("UTF-16")));
 	    } catch(IOException ex) {
 		ex.printStackTrace();
 		return false;
@@ -156,15 +156,15 @@ class ClientData extends Thread {
 		while(socket.read(buffer) != -1) {
 		    String bufstring = ((ByteBuffer) buffer.flip()).asCharBuffer().toString();
 		    buffer.clear();
-		    if(bufstring.equals("Please Login:\\x0c")) {
+		    if(bufstring.equals("Login Please:\f")) {
 			if(!Client.login(this.socket)) {
 			    throw new IOException();
 			}
-		    } else if(bufstring.equals("File:\\x0c")) {
+		    } else if(bufstring.equals("File:\f")) {
 			// Assume server will correctly send filename
 			socket.read(buffer);
 			Path file = Files.createFile(Paths.get(((ByteBuffer) buffer.flip()).asCharBuffer().toString()));
-			while(!bufstring.equals("\\x0c\\x0c")) {
+			while(!bufstring.equals("\f\f")) {
 			    buffer.clear();
 			    if(socket.read(buffer) != -1) {
 				ByteArrayOutputStream bytes = new ByteArrayOutputStream();
@@ -176,16 +176,16 @@ class ClientData extends Thread {
 				// Either server messed up or connection went away
 			    }
 			}
-		    } else if(bufstring.equals("Directory:\\x0c")) {
+		    } else if(bufstring.equals("Directory:\f")) {
 			socket.read(buffer);
 			Path dir = Files.createFile(Paths.get(((ByteBuffer) buffer.flip()).asCharBuffer().toString()));
-			while(!bufstring.equals("\\x0c\\x0c")) {
+			while(!bufstring.equals("\f\f")) {
 			    buffer.clear();
 			    if(socket.read(buffer) != -1) {
 				bufstring = ((ByteBuffer) buffer.flip()).asCharBuffer().toString();
-				if(bufstring.equals("File:\\x0c")) {
+				if(bufstring.equals("File:\f")) {
 				    
-				} else if(bufstring.equals("Directory:\\x0c")) {
+				} else if(bufstring.equals("Directory:\f")) {
 				    
 				} else {
 				    System.err.println("Unknown command: " + bufstring);
@@ -194,7 +194,7 @@ class ClientData extends Thread {
 				// Either server messed up or connection went away
 			    }
 			}
-		    } else if(bufstring.equals("Show File:\\x0c")) {
+		    } else if(bufstring.equals("Show File:\f")) {
 			if(socket.read(buffer) != -1) {
 			    String location = ((ByteBuffer) buffer.flip()).asCharBuffer().toString();
 			    buffer.clear();
@@ -202,9 +202,9 @@ class ClientData extends Thread {
 			} else {
 			    // Either server messed up or connection went away
 			}
-		    } else if(bufstring.equals("Show Directory:\\x0c")) {
+		    } else if(bufstring.equals("Show Directory:\f")) {
 			
-		    } else if(bufstring.equals("Alert:\\x0c")) {
+		    } else if(bufstring.equals("Alert:\f")) {
 			if(socket.read(buffer) != -1) {
 			    Client.alert(buffer);
 			} else {
@@ -227,6 +227,4 @@ class ClientData extends Thread {
 	    ex.printStackTrace();
 	}
     }
-    
-    
 }

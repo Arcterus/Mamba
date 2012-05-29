@@ -121,7 +121,7 @@ class Request extends Actor {
                 try {
 		    var directory: String = Server.fileDir
                     var buffer: ByteBuffer = ByteBuffer.allocate(2048)
-		    socket.write(ByteBuffer.wrap("Login Please:\f".getBytes("UTF-8")))
+		    socket.write(ByteBuffer.wrap("Login Please:\f".getBytes("UTF-16")))
                     socket.read(buffer)
 		    if(((buffer.flip()).asInstanceOf[ByteBuffer]).toString().compare("Username:\f") == 0) {
 		        buffer.clear()
@@ -137,23 +137,23 @@ class Request extends Actor {
 			    }
 			    if(directory.compare(Server.fileDir) == 0) {
 			        // Invalid username or password
-				socket.write(ByteBuffer.wrap("Alert:\f".getBytes("UTF-8")))
-				socket.write(ByteBuffer.wrap("Invalid username or password".getBytes("UTF-8")))
-				socket.write(ByteBuffer.wrap("\f\f".getBytes("UTF-8")))
+				socket.write(ByteBuffer.wrap("Alert:\f".getBytes("UTF-16")))
+				socket.write(ByteBuffer.wrap("Invalid username or password".getBytes("UTF-16")))
+				socket.write(ByteBuffer.wrap("\f\f".getBytes("UTF-16")))
 				return
 			    }
 			} else {
 			    // Client error
-			    socket.write(ByteBuffer.wrap("Alert:\f".getBytes("UTF-8")))
-			    socket.write(ByteBuffer.wrap(("Unexpected command: " + ((buffer.flip()).asInstanceOf[ByteBuffer]).asCharBuffer().toString).getBytes("UTF-8")))
-			    socket.write(ByteBuffer.wrap("\f\f".getBytes("UTF-8")))
+			    socket.write(ByteBuffer.wrap("Alert:\f".getBytes("UTF-16")))
+			    socket.write(ByteBuffer.wrap(("Unexpected command: " + ((buffer.flip()).asInstanceOf[ByteBuffer]).asCharBuffer().toString).getBytes("UTF-16")))
+			    socket.write(ByteBuffer.wrap("\f\f".getBytes("UTF-16")))
 			    return
 			}
 		    } else {
 		        // Client error
-			socket.write(ByteBuffer.wrap("Alert:\f".getBytes("UTF-8")))
-			socket.write(ByteBuffer.wrap(("Unexpected command: " + ((buffer.flip()).asInstanceOf[ByteBuffer]).asCharBuffer().toString()).getBytes("UTF-8")))
-			socket.write(ByteBuffer.wrap("\f\f".getBytes("UTF-8")))
+			socket.write(ByteBuffer.wrap("Alert:\f".getBytes("UTF-16")))
+			socket.write(ByteBuffer.wrap(("Unexpected command: " + ((buffer.flip()).asInstanceOf[ByteBuffer]).asCharBuffer().toString()).getBytes("UTF-16")))
+			socket.write(ByteBuffer.wrap("\f\f".getBytes("UTF-16")))
 			return
 		    }
 		    var dirContents: ArrayBuffer[String] = new ArrayBuffer[String](40)
@@ -176,13 +176,13 @@ class Request extends Actor {
 				    dirContents += file
 			            dirContents += subdirFile
 			        }
-			        socket.write(ByteBuffer.wrap("Show Directory:\f".getBytes("UTF-8")))
+			        socket.write(ByteBuffer.wrap("Show Directory:\f".getBytes("UTF-16")))
 			    } else {
-			        socket.write(ByteBuffer.wrap("Show File:\f".getBytes("UTF-8")))
+			        socket.write(ByteBuffer.wrap("Show File:\f".getBytes("UTF-16")))
 			    }
-			    socket.write(ByteBuffer.wrap(location.getBytes("UTF-8")))
-			    socket.write(ByteBuffer.wrap(file.getBytes("UTF-8")))
-			    socket.write(ByteBuffer.wrap("\f\f".getBytes("UTF-8")))
+			    socket.write(ByteBuffer.wrap(location.getBytes("UTF-16")))
+			    socket.write(ByteBuffer.wrap(file.getBytes("UTF-16")))
+			    socket.write(ByteBuffer.wrap("\f\f".getBytes("UTF-16")))
 			}
 		    }
 		    while(socket.isConnected()) {
@@ -191,9 +191,9 @@ class Request extends Actor {
                         if(isDirectory(filename) == true) {
 			    dirContents = dirContents.drop(dirContents.length)
 			    location = Server.fileDir + "/" + filename + "/"
-                            socket.write(ByteBuffer.wrap("Directory:\f".getBytes("UTF-8")))
-			    socket.write(ByteBuffer.wrap(location.getBytes("UTF-8")))
-			    socket.write(ByteBuffer.wrap("\f\f".getBytes("UTF-8")))
+                            socket.write(ByteBuffer.wrap("Directory:\f".getBytes("UTF-16")))
+			    socket.write(ByteBuffer.wrap(location.getBytes("UTF-16")))
+			    socket.write(ByteBuffer.wrap("\f\f".getBytes("UTF-16")))
 			    for((file: String) <- dirContents) {
 		                if(odd) {
 			            odd = false
@@ -206,12 +206,12 @@ class Request extends Actor {
 					    dirContents += file
 			                    dirContents += subdirFile
 			                }
-			                socket.write(ByteBuffer.wrap("Directory:\f".getBytes("UTF-8")))
-					socket.write(ByteBuffer.wrap(location.getBytes("UTF-8")))
-					socket.write(ByteBuffer.wrap(file.getBytes("UTF-8")))
+			                socket.write(ByteBuffer.wrap("Directory:\f".getBytes("UTF-16")))
+					socket.write(ByteBuffer.wrap(location.getBytes("UTF-16")))
+					socket.write(ByteBuffer.wrap(file.getBytes("UTF-16")))
 			            } else {
-			                socket.write(ByteBuffer.wrap("File:\f".getBytes("UTF-8")))
-					socket.write(ByteBuffer.wrap((location + file).getBytes("UTF-8")))
+			                socket.write(ByteBuffer.wrap("File:\f".getBytes("UTF-16")))
+					socket.write(ByteBuffer.wrap((location + file).getBytes("UTF-16")))
 					var fchannel: FileChannel = new FileInputStream(file).getChannel()
 					var filedata: String = ""
 					buffer.clear()
@@ -219,14 +219,14 @@ class Request extends Actor {
 					    filedata += ((buffer.flip()).asInstanceOf[ByteBuffer]).asCharBuffer().toString()
 					    buffer.clear()
 					}
-					socket.write(ByteBuffer.wrap(filedata.getBytes("UTF-8")))
+					socket.write(ByteBuffer.wrap(filedata.getBytes("UTF-16")))
 			            }
-			            socket.write(ByteBuffer.wrap("\f\f".getBytes("UTF-8")))
+			            socket.write(ByteBuffer.wrap("\f\f".getBytes("UTF-16")))
 			        }
 			    }
                         } else {
-                            socket.write(ByteBuffer.wrap("File:\f".getBytes("UTF-8")))
-			    socket.write(ByteBuffer.wrap((location + filename).getBytes("UTF-8")))
+                            socket.write(ByteBuffer.wrap("File:\f".getBytes("UTF-16")))
+			    socket.write(ByteBuffer.wrap((location + filename).getBytes("UTF-16")))
 			    var fchannel: FileChannel = new FileInputStream(filename).getChannel()
 			    var filedata: String = ""
 			    buffer.clear()
@@ -234,17 +234,17 @@ class Request extends Actor {
 			        filedata += ((buffer.flip()).asInstanceOf[ByteBuffer]).asCharBuffer().toString()
 			        buffer.clear()
 			    }
-			    socket.write(ByteBuffer.wrap(filedata.getBytes("UTF-8")))
-			    socket.write(ByteBuffer.wrap("\f\f".getBytes("UTF-8")))
+			    socket.write(ByteBuffer.wrap(filedata.getBytes("UTF-16")))
+			    socket.write(ByteBuffer.wrap("\f\f".getBytes("UTF-16")))
                         }
 			buffer.clear()
                     }
                 } catch {
                     case ex: IOException =>
                         ex.printStackTrace()
-			socket.write(ByteBuffer.wrap("Alert:\f".getBytes("UTF-8")))
-			socket.write(ByteBuffer.wrap("Error opening file".getBytes("UTF-8")))
-			socket.write(ByteBuffer.wrap("\f\f".getBytes("UTF-8")))
+			socket.write(ByteBuffer.wrap("Alert:\f".getBytes("UTF-16")))
+			socket.write(ByteBuffer.wrap("Error opening file".getBytes("UTF-16")))
+			socket.write(ByteBuffer.wrap("\f\f".getBytes("UTF-16")))
                 }
         }
     }
